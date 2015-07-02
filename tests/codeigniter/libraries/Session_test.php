@@ -94,7 +94,7 @@ return;
 		$cmsg1 = 'Some test data';
 		$cmsg2 = 42;
 		$nmsg1 = 'Other test data';
-		$nmsg2 = TRUE;
+		$nmsg2 = true;
 		$this->session->cookie->set_userdata($key1, $cmsg1);
 		$this->session->set_userdata($ckey2, $cmsg2);
 		$this->session->native->set_userdata($key1, $nmsg1);

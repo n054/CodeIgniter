@@ -193,7 +193,7 @@ class Config_test extends CI_TestCase {
 		$cfg = array(
 			'one' => 'prime',
 			'two' => 2,
-			'three' => TRUE
+			'three' => true
 		);
 		$this->ci_vfs_create($file.'.php', '<?php $config = '.var_export($cfg, TRUE).';', $this->ci_app_root, 'config');
 		$this->assertTrue($this->config->load($file, TRUE));
