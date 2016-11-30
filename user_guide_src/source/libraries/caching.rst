@@ -18,7 +18,7 @@ requirements are not met.
 Example Usage
 *************
 
-The following example will load the cache driver, specify `APC <#apc>`_
+The following example will load the cache driver, specify `APC <#alternative-php-cache-apc-caching>`_
 as the driver to use, and fall back to file-based caching if APC is not
 available in the hosting environment.
 
@@ -66,7 +66,7 @@ Class Reference
 		hosting environment.
 		::
 
-			if ($this->cache->apc->is_supported()
+			if ($this->cache->apc->is_supported())
 			{
 				if ($data = $this->cache->apc->get('my_cache'))
 				{
@@ -255,8 +255,6 @@ To use it, you need `Redis server and phpredis PHP extension <https://github.com
 Config options to connect to redis server must be stored in the application/config/redis.php file.
 Available options are::
 	
-	$config['socket_type'] = 'tcp'; //`tcp` or `unix`
-	$config['socket'] = '/var/run/redis.sock'; // in case of `unix` socket type
 	$config['host'] = '127.0.0.1';
 	$config['password'] = NULL;
 	$config['port'] = 6379;

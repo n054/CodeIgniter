@@ -6,7 +6,7 @@
  *
  * This content is released under the MIT License (MIT)
  *
- * Copyright (c) 2014 - 2015, British Columbia Institute of Technology
+ * Copyright (c) 2014 - 2016, British Columbia Institute of Technology
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -28,10 +28,10 @@
  *
  * @package	CodeIgniter
  * @author	EllisLab Dev Team
- * @copyright	Copyright (c) 2008 - 2014, EllisLab, Inc. (http://ellislab.com/)
- * @copyright	Copyright (c) 2014 - 2015, British Columbia Institute of Technology (http://bcit.ca/)
+ * @copyright	Copyright (c) 2008 - 2014, EllisLab, Inc. (https://ellislab.com/)
+ * @copyright	Copyright (c) 2014 - 2016, British Columbia Institute of Technology (http://bcit.ca/)
  * @license	http://opensource.org/licenses/MIT	MIT License
- * @link	http://codeigniter.com
+ * @link	https://codeigniter.com
  * @since	Version 1.0.0
  * @filesource
  */
@@ -44,7 +44,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
  * @subpackage	Helpers
  * @category	Helpers
  * @author		EllisLab Dev Team
- * @link		http://codeigniter.com/user_guide/helpers/download_helper.html
+ * @link		https://codeigniter.com/user_guide/helpers/download_helper.html
  */
 
 // ------------------------------------------------------------------------
@@ -56,7 +56,7 @@ if ( ! function_exists('force_download'))
 	 *
 	 * Generates headers that force a download to happen
 	 *
-	 * @param	string	filename
+	 * @param	mixed	filename (or an array of local file path => destination filename)
 	 * @param	mixed	the data to be downloaded
 	 * @param	bool	whether to try and send the actual file MIME type
 	 * @return	void
@@ -69,15 +69,37 @@ if ( ! function_exists('force_download'))
 		}
 		elseif ($data === NULL)
 		{
-			if (@is_file($filename) && ($filesize = @filesize($filename)) !== FALSE)
+			// Is $filename an array as ['local source path' => 'destination filename']?
+			if (is_array($filename))
 			{
-				$filepath = $filename;
-				$filename = explode('/', str_replace(DIRECTORY_SEPARATOR, '/', $filename));
-				$filename = end($filename);
+				if (count($filename) !== 1)
+				{
+					return;
+				}
+
+				$filepath = key($filename);
+				$filename = current($filename);
+
+				if (is_int($filepath))
+				{
+					return;
+				}
+
+				if ( ! @is_file($filepath) OR ($filesize = @filesize($filepath)) === FALSE)
+				{
+					return;
+				}
 			}
 			else
 			{
-				return;
+				if ( ! @is_file($filename) OR ($filesize = @filesize($filename)) === FALSE)
+				{
+					return;
+				}
+
+				$filepath = $filename;
+				$filename = explode('/', str_replace(DIRECTORY_SEPARATOR, '/', $filename));
+				$filename = end($filename);
 			}
 		}
 		else
@@ -140,14 +162,7 @@ if ( ! function_exists('force_download'))
 		header('Expires: 0');
 		header('Content-Transfer-Encoding: binary');
 		header('Content-Length: '.$filesize);
-
-		// Internet Explorer-specific headers
-		if (isset($_SERVER['HTTP_USER_AGENT']) && strpos($_SERVER['HTTP_USER_AGENT'], 'MSIE') !== FALSE)
-		{
-			header('Cache-Control: no-cache, no-store, must-revalidate');
-		}
-
-		header('Pragma: no-cache');
+		header('Cache-Control: private, no-transform, no-store, must-revalidate');
 
 		// If we have raw data - just dump it
 		if ($data !== NULL)

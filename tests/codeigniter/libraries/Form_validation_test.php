@@ -8,10 +8,10 @@ class Form_validation_test extends CI_TestCase {
 
 		// Create a mock loader since load->helper() looks in the wrong directories for unit tests,
 		// We'll use CI_TestCase->helper() instead
-		$loader = $this->getMock('CI_Loader', array('helper'));
+		$loader = $this->getMockBuilder('CI_Loader')->setMethods(array('helper'))->getMock();
 
 		// Same applies for lang
-		$lang = $this->getMock('CI_Lang', array('load'));
+		$lang = $this->getMockBuilder('CI_Lang')->setMethods(array('load'))->getMock();
 
 		$this->ci_set_config('charset', 'UTF-8');
 		$utf8 = new Mock_Core_Utf8();
@@ -28,13 +28,34 @@ class Form_validation_test extends CI_TestCase {
 		$this->form_validation = new CI_Form_validation();
 	}
 
+	public function test_empty_array_input()
+	{
+		$this->assertFalse(
+			$this->run_rules(
+				array(array('field' => 'foo', 'label' => 'Foo Label', 'rules' => 'required')),
+				array('foo' => array())
+			)
+		);
+	}
+
 	public function test_rule_required()
 	{
-		$rules = array(array('field' => 'foo', 'label' => 'foo_label', 'rules' => 'required'));
-		$this->assertTrue($this->run_rules($rules, array('foo' => 'bar')));
+		$rules = array(array('field' => 'foo', 'label' => 'Foo', 'rules' => 'is_numeric'));
 
+		// Empty, not required
+		$this->assertTrue($this->run_rules($rules, array('foo' => '')));
+
+
+		// Not required, but also not empty
+		$this->assertTrue($this->run_rules($rules, array('foo' => '123')));
+		$this->assertFalse($this->run_rules($rules, array('foo' => 'bar')));
+
+		// Required variations
+		$rules[0]['rules'] .= '|required';
+		$this->assertTrue($this->run_rules($rules, array('foo' => '123')));
 		$this->assertFalse($this->run_rules($rules, array('foo' => '')));
 		$this->assertFalse($this->run_rules($rules, array('foo' => ' ')));
+		$this->assertFalse($this->run_rules($rules, array('foo' => 'bar')));
 	}
 
 	public function test_rule_matches()
@@ -45,9 +66,9 @@ class Form_validation_test extends CI_TestCase {
 		);
 		$values_base = array('foo' => 'sample');
 
-		$this->assertTrue($this->run_rules($rules, array_merge($values_base, array('bar' => ''))));
 		$this->assertTrue($this->run_rules($rules, array_merge($values_base, array('bar' => 'sample'))));
 
+		$this->assertFalse($this->run_rules($rules, array_merge($values_base, array('bar' => ''))));
 		$this->assertFalse($this->run_rules($rules, array_merge($values_base, array('bar' => 'Sample'))));
 		$this->assertFalse($this->run_rules($rules, array_merge($values_base, array('bar' => ' sample'))));
 	}
@@ -229,7 +250,17 @@ class Form_validation_test extends CI_TestCase {
 	public function test_rule_valid_url()
 	{
 		$this->assertTrue($this->form_validation->valid_url('www.codeigniter.com'));
-		$this->assertTrue($this->form_validation->valid_url('http://codeigniter.eu'));
+		$this->assertTrue($this->form_validation->valid_url('http://codeigniter.com'));
+
+		// https://bugs.php.net/bug.php?id=51192
+		$this->assertTrue($this->form_validation->valid_url('http://accept-dashes.tld'));
+		$this->assertFalse($this->form_validation->valid_url('http://reject_underscores.tld'));
+
+		// https://github.com/bcit-ci/CodeIgniter/issues/4415
+		$this->assertTrue($this->form_validation->valid_url('http://[::1]/ipv6'));
+
+		// URI scheme case-sensitivity: https://github.com/bcit-ci/CodeIgniter/pull/4758
+		$this->assertTrue($this->form_validation->valid_url('HtTp://127.0.0.1/'));
 
 		$this->assertFalse($this->form_validation->valid_url('htt://www.codeIgniter.com'));
 		$this->assertFalse($this->form_validation->valid_url(''));
@@ -402,6 +433,12 @@ class Form_validation_test extends CI_TestCase {
 
 		$form_validation = new CI_Form_validation($config);
 		$this->assertFalse($form_validation->run('fail'));
+	}
+
+	public function test_set_rules_exception()
+	{
+		$this->setExpectedException('BadMethodCallException');
+		$this->form_validation->set_rules('foo', 'bar');
 	}
 
 	public function test_has_rule()
